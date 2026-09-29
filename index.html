@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
 /* =====================================================================
-   CONFIG: sửa ở phần <script> cuối file (NAME, START_DATE, FORMSPREE_ID)
+   CONFIG: sửa ở phần <script> cuối file (NAME, FORMSPREE_ID, BUSY_DAYS...)
    ===================================================================== */
 :root{
   --bg:#FFF4E2; --ink:#221A12; --muted:#7A6A58; --card:#FFFFFF;
@@ -154,6 +154,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .day.busy b,.day.busy span{color:#A8988A;text-decoration:line-through}
 .day.busy em{position:absolute;top:-9px;right:-6px;font-style:normal;font-size:.62rem;font-weight:800;background:#E0392B;color:#fff;padding:1px 5px;border-radius:6px;transform:rotate(8deg)}
 .day.nope{animation:shake .4s}
+.day.past{opacity:.35;box-shadow:none;border-style:dotted;cursor:default}
+.day.past b{color:var(--muted)}
 /* nhắc khi hover (máy tính); điện thoại dùng toast */
 @media (hover:hover){
   .day[data-tip]:hover::after{
@@ -366,8 +368,7 @@ const CATS = {
    CONFIG — sửa ở đây
    ===================================================================== */
 const NAME         = "Millie";       // tên hiện ở dòng "Hi ..."
-const START_DATE   = "2026-09-29";   // ngày đầu tiên cho chọn (YYYY-MM-DD)
-const END_DATE     = "2026-10-11";   // ngày cuối cùng cho chọn (YYYY-MM-DD)
+// Lịch tự tính theo ngày mở trang: từ thứ 2 tuần này đến CN tuần sau (2 tuần); ngày đã qua bị khoá.
 // nhắc khi hover/chạm vào thứ trong tuần (0 = CN, 1 = T2, ..., 4 = T5)
 const WEEKDAY_TIPS = { 4: "Đi oánh cầu nhá 👀" };
 // ngày bận: hiện nhưng không chọn được
@@ -635,23 +636,26 @@ const DOW_LONG  = ["Chủ nhật","Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ
 const dd = d => String(d.getDate()).padStart(2,"0") + "/" + String(d.getMonth()+1).padStart(2,"0");
 const isWeekend = d => d.getDay() === 0 || d.getDay() === 6;
 function dayList(){
-  const [y, m, d] = START_DATE.split("-").map(Number);
-  const [ey, em, ed] = END_DATE.split("-").map(Number);
-  const end = new Date(ey, em - 1, ed), out = [];
-  for (let i = 0; ; i++){ const x = new Date(y, m - 1, d + i); if (x > end) break; out.push(x); }
-  return out;
+  // thứ 2 tuần này → CN tuần sau
+  const t = today(), mon = t.getDate() - (t.getDay() + 6) % 7;
+  return Array.from({length: 14}, (_, i) => new Date(t.getFullYear(), t.getMonth(), mon + i));
 }
 function dayKey(d){ return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+function today(){ const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
 function isoKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
 const canHover = matchMedia("(hover: hover)").matches;
 
 function renderDays(){
   const box = $("#days"); box.innerHTML = "";
   const list = dayList();
-  // lịch dạng lưới T2 → CN: chèn ô trống trước ngày đầu tiên
-  for (let i = 0; i < (list[0].getDay() + 6) % 7; i++) box.appendChild(document.createElement("i"));
+  const t0 = today();
   list.forEach(d => {
     const k = dayKey(d), b = document.createElement("button");
+    if (d < t0){   // ngày đã qua: hiện mờ, không bấm được
+      b.className = "day past" + (isWeekend(d) ? " weekend" : ""); b.disabled = true;
+      b.innerHTML = `<b>${DOW_SHORT[d.getDay()]}</b><span>${dd(d)}</span>`;
+      box.appendChild(b); return;
+    }
     const busy = BUSY_DAYS[isoKey(d)], tip = busy || WEEKDAY_TIPS[d.getDay()];
     b.className = "day" + (isWeekend(d) ? " weekend" : "") + (state.days.has(k) ? " on" : "") + (busy ? " busy" : "");
     b.innerHTML = `<b>${DOW_SHORT[d.getDay()]}</b><span>${dd(d)}</span>` + (busy ? `<em>bận</em>` : "");
