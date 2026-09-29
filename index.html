@@ -138,9 +138,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .step .sub{color:var(--muted);margin:0 0 22px}
 .wrap{width:100%;max-width:560px}
 
-.days{display:flex;gap:10px;overflow-x:auto;padding:4px 4px 12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;padding:4px 4px 12px}
 .day{
-  flex:0 0 auto;scroll-snap-align:start;width:76px;padding:10px 0;background:var(--card);
+  position:relative;min-width:0;padding:10px 0;background:var(--card);
   border:2.5px solid var(--line);border-radius:12px;box-shadow:3px 3px 0 var(--line);
   display:flex;flex-direction:column;align-items:center;gap:2px;
 }
@@ -150,6 +150,19 @@ button{font:inherit;color:inherit;cursor:pointer}
 .day.on{background:var(--ink);color:var(--bg)}
 .day.on span{color:var(--bg)}
 .day.on.weekend b{color:var(--warn)}
+.day.busy{background:repeating-linear-gradient(-45deg,#F1E8DA 0 6px,#E6DAC7 6px 12px);border-style:dashed;box-shadow:none;cursor:not-allowed}
+.day.busy b,.day.busy span{color:#A8988A;text-decoration:line-through}
+.day.busy em{position:absolute;top:-9px;right:-6px;font-style:normal;font-size:.62rem;font-weight:800;background:#E0392B;color:#fff;padding:1px 5px;border-radius:6px;transform:rotate(8deg)}
+.day.nope{animation:shake .4s}
+/* nhắc khi hover (máy tính); điện thoại dùng toast */
+@media (hover:hover){
+  .day[data-tip]:hover::after{
+    content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);z-index:5;
+    background:var(--ink);color:#fff;font-size:.8rem;font-weight:700;white-space:nowrap;padding:6px 10px;border-radius:10px;pointer-events:none;
+    animation:fadeIn .15s;
+  }
+}
+@media (max-width:420px){.days{gap:5px}.day{padding:8px 0;border-width:2px;box-shadow:2px 2px 0 var(--line)}.day b{font-size:.9rem}.day span{font-size:.62rem}}
 
 .panels{display:flex;flex-direction:column;gap:14px;margin:10px 0 22px;text-align:left}
 .panel{background:var(--card);border:2.5px solid var(--line);border-radius:14px;box-shadow:3px 3px 0 var(--line);padding:14px;animation:fadeIn .25s}
@@ -163,7 +176,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .need{color:var(--accent);font-weight:700;min-height:1.4em;margin:0 0 12px;font-size:.95rem}
 
 .acts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
-@media (max-width:420px){.acts{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:420px){.acts{grid-template-columns:repeat(2,1fr)}.act.wide{grid-column:1/-1}}
 .act{
   position:relative;background:var(--card);border:2.5px solid var(--line);border-radius:14px;box-shadow:3px 3px 0 var(--line);
   padding:18px 8px 14px;display:flex;flex-direction:column;align-items:center;gap:6px;font-weight:800;font-size:1rem;
@@ -176,7 +189,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .act.nope .mark{background:#FF5A4E;color:#fff}
 .act.nope .lb{text-decoration:line-through}
 .act.wiggle{animation:shake .45s}
-.act.wide{grid-column:1/-1;flex-direction:row;justify-content:center;gap:10px}
+.act.wide{grid-column:span 2;flex-direction:row;justify-content:center;gap:10px}
 .act .sub{font-weight:600;font-size:.85rem;color:var(--muted)}
 #customWrap{margin:-6px 0 20px;animation:fadeIn .25s}
 #custom{
@@ -234,7 +247,7 @@ textarea{
 .barcode{display:flex;height:44px;gap:0;justify-content:center;margin:10px 0 4px}
 .barcode i{display:block;background:#222;height:100%}
 .stamp{
-  position:absolute;right:14px;top:120px;border:4px double #E0392B;color:#E0392B;font-weight:800;
+  position:absolute;right:10px;bottom:46px;border:4px double #E0392B;color:#E0392B;font-weight:800;
   padding:6px 10px;font-size:1rem;transform:rotate(-14deg) scale(3);opacity:0;letter-spacing:.06em;border-radius:6px;
   font-family:"Be Vietnam Pro",sans-serif;background:rgba(255,253,247,.6)
 }
@@ -287,7 +300,7 @@ textarea{
   <div class="wrap">
     <span class="step-tag">BƯỚC 1/3</span>
     <h2>Khi nào?</h2>
-    <p class="sub">Chọn được nhiều ngày nha</p>
+    <p class="sub">Chọn hết cũng được</p>
     <div class="days" id="days"></div>
     <div class="panels" id="panels"></div>
     <p class="need" id="needWhen"></p>
@@ -354,7 +367,11 @@ const CATS = {
    ===================================================================== */
 const NAME         = "Millie";       // tên hiện ở dòng "Hi ..."
 const START_DATE   = "2026-09-29";   // ngày đầu tiên cho chọn (YYYY-MM-DD)
-const NUM_DAYS     = 7;              // số ngày hiện ra
+const END_DATE     = "2026-10-11";   // ngày cuối cùng cho chọn (YYYY-MM-DD)
+// nhắc khi hover/chạm vào thứ trong tuần (0 = CN, 1 = T2, ..., 4 = T5)
+const WEEKDAY_TIPS = { 4: "Đi oánh cầu nhá 👀" };
+// ngày bận: hiện nhưng không chọn được
+const BUSY_DAYS    = { "2026-10-02": "Anh bận mấc tiu" };
 const FORMSPREE_ID = "xdekyald";           // vd "xyzabcd" (lấy ở formspree.io). Để trống = chế độ thử, không gửi.
 
 const WEEKDAY_TIMES = ["17:30","18:00","18:30","19:00","19:30","20:00"];
@@ -368,9 +385,10 @@ const ACTIVITIES = [
   {id:"photo",ic:"📸", lb:"Photobooth"},
   {id:"shop", ic:"🎨", lb:"Workshop"},
   {id:"hoa",  ic:"🌼", lb:"Đi hít mùi hoa sữa"},
+  {id:"co",   ic:"🫡", lb:"Thượng cờ"},
   {id:"an",   ic:"🍜", lb:"Đi ăn",   lock:"yes", msg:"(chắc chắn là có ăn rồi)"},
   {id:"tuy",  ic:"🤷", lb:"Tuỳ anh", lock:"no",  msg:"(noooo)"},
-  {id:"tu",   ic:"✍️", lb:"Em tự chọn", sub:"(anh rất thích)", custom:true},
+  {id:"tu",   ic:"✍️", lb:"Em tự chọn", sub:"(ngonnn)", custom:true},
 ];
 const CHASE_TEXTS = ["Hụt rồi","Gà","Đố bắt được"];
 const NO_CLICK_TEXTS = ["Em chắc chưa? 🤨","Em thật sự chắc chắn chưa? 🤨","Em chắc chưa? Hỏi lần cuối? 🤨"];
@@ -618,17 +636,29 @@ const dd = d => String(d.getDate()).padStart(2,"0") + "/" + String(d.getMonth()+
 const isWeekend = d => d.getDay() === 0 || d.getDay() === 6;
 function dayList(){
   const [y, m, d] = START_DATE.split("-").map(Number);
-  return Array.from({length: NUM_DAYS}, (_, i) => new Date(y, m - 1, d + i));
+  const [ey, em, ed] = END_DATE.split("-").map(Number);
+  const end = new Date(ey, em - 1, ed), out = [];
+  for (let i = 0; ; i++){ const x = new Date(y, m - 1, d + i); if (x > end) break; out.push(x); }
+  return out;
 }
 function dayKey(d){ return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+function isoKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+const canHover = matchMedia("(hover: hover)").matches;
 
 function renderDays(){
   const box = $("#days"); box.innerHTML = "";
-  dayList().forEach(d => {
+  const list = dayList();
+  // lịch dạng lưới T2 → CN: chèn ô trống trước ngày đầu tiên
+  for (let i = 0; i < (list[0].getDay() + 6) % 7; i++) box.appendChild(document.createElement("i"));
+  list.forEach(d => {
     const k = dayKey(d), b = document.createElement("button");
-    b.className = "day" + (isWeekend(d) ? " weekend" : "") + (state.days.has(k) ? " on" : "");
-    b.innerHTML = `<b>${DOW_SHORT[d.getDay()]}</b><span>${dd(d)}</span>`;
+    const busy = BUSY_DAYS[isoKey(d)], tip = busy || WEEKDAY_TIPS[d.getDay()];
+    b.className = "day" + (isWeekend(d) ? " weekend" : "") + (state.days.has(k) ? " on" : "") + (busy ? " busy" : "");
+    b.innerHTML = `<b>${DOW_SHORT[d.getDay()]}</b><span>${dd(d)}</span>` + (busy ? `<em>bận</em>` : "");
+    if (tip) b.dataset.tip = tip;
     b.onclick = () => {
+      if (tip && !canHover) toast(tip);   // điện thoại không có hover thì nhắc bằng toast
+      if (busy){ b.classList.remove("nope"); b.offsetWidth; b.classList.add("nope"); return; }
       if (state.days.has(k)) state.days.delete(k);
       else state.days.set(k, {date:d, weekend:isWeekend(d), slot:null, time:null, place:null});
       renderDays();
@@ -671,7 +701,7 @@ function renderPanels(){
   });
   // kiểm tra đủ chưa
   let need = "";
-  if (!state.days.size) need = "Chọn ít nhất 1 ngày nha 👆";
+  if (!state.days.size) need = "Chọn ít nhất 1 ngày 👀";
   else for (const v of sortedDays()){
     const n = DOW_SHORT[v.date.getDay()] + " " + dd(v.date);
     if (v.weekend && !v.slot){ need = `Chọn buổi cho ${n} nha`; break; }
@@ -761,8 +791,6 @@ function buildReceipt(){
   $("#rMain").innerHTML = `
     <div class="r-center">
       <div class="r-title">LET'S GOOOOO</div>
-      <div class="r-small">Công ty TNHH Một Thành Viên Đi Chơi</div>
-      <div class="r-small">MST: 0-CHO-TU-CHOI</div>
       <hr class="r-hr">
       <div style="font-weight:800">HOÁ ĐƠN ĐI CHƠI</div>
       <div class="r-small">Số: ${code} · ${printed}</div>
@@ -774,13 +802,13 @@ function buildReceipt(){
     <div style="font-weight:800;font-size:.82rem">LỊCH TRÌNH</div>
     <ul class="r-list">${scheduleLines().map(l => `<li>› ${l}</li>`).join("")}</ul>
     <hr class="r-hr">
-    ${chosenActs().map(a => `<div class="r-row"><span>${a.ic} ${esc(a.lb)} x1</span><span>${a.custom ? "Anh rất thích" : "Anh trả"}</span></div>`).join("")}
+    ${chosenActs().map(a => `<div class="r-row"><span>${a.ic} ${esc(a.lb)} x1</span><span>${a.custom ? "Ngonnn" : "Anh trả"}</span></div>`).join("")}
     <div class="r-row"><span>🤷 Tuỳ anh x0</span><span>Bị từ chối</span></div>
     <div class="r-row"><span>😤 Cứng đầu x${state.noAttempts}</span><span>Miễn phí</span></div>
     <div class="r-row"><span>👆 Bấm CÓ x3</span><span>Đã lưu</span></div>
     <hr class="r-hr">
     <div class="r-row total"><span>TỔNG CỘNG</span><span>VÔ GIÁ</span></div>
-    <div class="r-row"><span>Khách đưa</span><span>0đ</span></div>
+    <div class="r-row"><span>Khách đưa</span><span>nụ cườisss</span></div>
     <div class="r-row"><span>Trả lại</span><span>1 buổi vui</span></div>
     ${note ? `<hr class="r-hr"><div style="font-weight:800;font-size:.82rem">LỜI DẶN</div><div class="r-note">"${esc(note)}"</div>` : ""}
     <hr class="r-hr">
