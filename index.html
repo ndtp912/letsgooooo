@@ -1,0 +1,932 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Let's gooooo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   CONFIG: sửa ở phần <script> cuối file (NAME, START_DATE, FORMSPREE_ID)
+   ===================================================================== */
+:root{
+  --bg:#FFF4E2; --ink:#221A12; --muted:#7A6A58; --card:#FFFFFF;
+  --yes:#23C483; --yes-dark:#15945F; --no:#FFFFFF;
+  --accent:#FF7A3D; --accent2:#3D8BFF; --warn:#FFD23F;
+  --paper:#FFFDF7; --line:#221A12;
+  --shadow:4px 4px 0 var(--line);
+  --radius:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:"Be Vietnam Pro",system-ui,sans-serif;
+  background-image:radial-gradient(rgba(34,26,18,.08) 1px,transparent 1px);
+  background-size:18px 18px;
+  overflow-x:hidden;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+
+.screen{display:none;min-height:100dvh;padding:24px 16px 40px;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.screen.active{display:flex;animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ---------- Màn chính ---------- */
+.hi{font-size:clamp(1.1rem,4vw,1.4rem);font-weight:600;margin:0 0 8px;color:var(--muted)}
+.hi b{color:var(--accent)}
+#q{font-size:clamp(1.9rem,8vw,3.4rem);font-weight:900;line-height:1.15;margin:0 0 40px;max-width:14ch}
+#q.pop{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(.9)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+
+.btns{display:flex;gap:20px;align-items:center;justify-content:center;flex-wrap:wrap;min-height:120px}
+.big-btn{
+  border:3px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+  font-weight:900;letter-spacing:.02em;padding:.55em 1.3em;transition:transform .1s, box-shadow .1s;
+  user-select:none;-webkit-user-select:none;
+}
+.big-btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--line)}
+#yes{
+  --lvl:0;background:var(--yes);color:#fff;
+  font-size:min(calc(1.3rem + var(--lvl) * .45rem), 13vw);
+  transition:font-size .3s cubic-bezier(.3,1.6,.5,1), transform .1s;
+  text-shadow:2px 2px 0 var(--yes-dark);
+}
+.yes-wrap{position:relative}
+.no-slot{display:inline-block;position:relative}
+/* khung xác nhận dưới nút KHÔNG (phase 2) */
+.confirm{
+  position:absolute;top:calc(100% + 14px);left:50%;transform:translateX(-50%);z-index:20;
+  width:max-content;max-width:min(240px,calc(100vw - 32px));background:var(--card);
+  border:2.5px solid var(--line);border-radius:12px;box-shadow:3px 3px 0 var(--line);
+  padding:10px 14px;text-align:center;display:none;
+}
+.confirm.show{display:block}
+.confirm.pop{animation:confirmPop .3s cubic-bezier(.3,1.6,.5,1)}
+@keyframes confirmPop{from{transform:translateX(-50%) scale(.85)}to{transform:translateX(-50%) scale(1)}}
+.confirm::before{content:"";position:absolute;bottom:100%;left:50%;transform:translateX(-50%);border:9px solid transparent;border-bottom-color:var(--line)}
+.confirm::after{content:"";position:absolute;bottom:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-bottom-color:var(--card)}
+.confirm b{display:block;font-size:1.05rem;font-weight:900}
+
+#no{background:var(--no);font-size:1.3rem;touch-action:none}
+#no.floating{position:fixed;z-index:30;margin:0;transition:left .28s ease, top .28s ease, opacity .3s, transform .3s}
+#no.floating.instant{transition:none}
+#no.poof{opacity:0;transform:scale(.2) rotate(40deg);pointer-events:none}
+#no.shake{animation:shake .5s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px) rotate(-3deg)}40%{transform:translateX(8px) rotate(3deg)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+#no .ch{display:inline-block}
+#no .ch.fall{animation:fall .7s ease-in forwards}
+@keyframes fall{to{transform:translateY(120px) rotate(var(--r));opacity:0}}
+#no.da{background:var(--yes);color:#fff;text-shadow:2px 2px 0 var(--yes-dark)}
+
+/* mũi tên gợi ý */
+.hint{
+  position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);
+  white-space:nowrap;font-weight:800;font-size:1rem;background:var(--warn);
+  border:2.5px solid var(--line);border-radius:10px;padding:4px 10px;box-shadow:3px 3px 0 var(--line);
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.hint.show{opacity:1;animation:bob .8s ease-in-out infinite}
+.hint .arrow{display:block;font-size:1.4rem;line-height:1;position:absolute;left:50%;top:100%;transform:translateX(-50%)}
+@keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-8px)}}
+
+/* bong bóng thoại cạnh nút KHÔNG + dòng "Ứ cho chọn nữa?" */
+.bubble{
+  position:fixed;z-index:40;pointer-events:none;background:var(--ink);color:#fff;font-weight:800;
+  padding:6px 12px;border-radius:10px;font-size:1rem;white-space:nowrap;
+  opacity:0;transform:translate(-50%,6px);transition:opacity .2s, transform .2s;
+}
+.bubble.show{opacity:1;transform:translate(-50%,0)}
+.bubble::after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);border:7px solid transparent;border-top-color:var(--ink)}
+.ghost{
+  position:fixed;z-index:40;pointer-events:none;font-weight:900;font-size:1.25rem;color:var(--accent);
+  transform:translate(-50%,-50%);opacity:0;white-space:nowrap;
+}
+.ghost.show{animation:ghost 5s ease forwards}
+@keyframes ghost{0%{opacity:0;transform:translate(-50%,-30%)}8%{opacity:1;transform:translate(-50%,-50%)}
+  50%{transform:translate(-50%,-62%)}92%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%)}}
+
+/* hạt bung ra khi bấm CÓ / confetti */
+.particle{position:fixed;z-index:100;pointer-events:none;font-size:1.2rem;left:0;top:0}
+
+/* ---------- Modal ---------- */
+.modal-bg{position:fixed;inset:0;z-index:80;background:rgba(34,26,18,.45);display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.show{display:flex;animation:fadeIn .2s}
+.modal{
+  background:var(--card);border:3px solid var(--line);border-radius:18px;box-shadow:6px 6px 0 var(--line);
+  padding:28px 22px;max-width:380px;width:100%;text-align:center;animation:modalIn .35s cubic-bezier(.3,1.5,.5,1);
+}
+@keyframes modalIn{from{transform:scale(.7) rotate(-4deg);opacity:0}to{transform:none;opacity:1}}
+.modal h2{margin:0 0 10px;font-size:1.7rem;font-weight:900}
+.modal p{margin:0 0 20px;font-size:1.1rem;line-height:1.5}
+.modal .emoji{font-size:3rem;display:block;margin-bottom:8px}
+.count{font-family:"JetBrains Mono",monospace;font-size:4rem;font-weight:800;color:var(--accent);display:block;line-height:1;margin:6px 0 10px}
+.pill-btn{
+  background:var(--yes);color:#fff;border:3px solid var(--line);border-radius:12px;box-shadow:var(--shadow);
+  font-weight:900;font-size:1.2rem;padding:12px 26px;text-shadow:1px 1px 0 var(--yes-dark);
+}
+.pill-btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--line)}
+.pill-btn:disabled{background:#CFC6BA;text-shadow:none;cursor:not-allowed;box-shadow:2px 2px 0 var(--line)}
+.ghost-btn{background:var(--card);color:var(--ink);text-shadow:none}
+
+/* ---------- Các bước ---------- */
+.step{justify-content:flex-start;padding-top:40px}
+.step-tag{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:.85rem;background:var(--ink);color:var(--bg);padding:4px 10px;border-radius:6px}
+.step h2{font-size:clamp(1.7rem,7vw,2.4rem);font-weight:900;margin:12px 0 4px}
+.step .sub{color:var(--muted);margin:0 0 22px}
+.wrap{width:100%;max-width:560px}
+
+.days{display:flex;gap:10px;overflow-x:auto;padding:4px 4px 12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.day{
+  flex:0 0 auto;scroll-snap-align:start;width:76px;padding:10px 0;background:var(--card);
+  border:2.5px solid var(--line);border-radius:12px;box-shadow:3px 3px 0 var(--line);
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.day b{font-size:1.15rem;font-weight:900}
+.day span{font-family:"JetBrains Mono",monospace;font-size:.85rem;color:var(--muted)}
+.day.weekend b{color:var(--accent)}
+.day.on{background:var(--ink);color:var(--bg)}
+.day.on span{color:var(--bg)}
+.day.on.weekend b{color:var(--warn)}
+
+.panels{display:flex;flex-direction:column;gap:14px;margin:10px 0 22px;text-align:left}
+.panel{background:var(--card);border:2.5px solid var(--line);border-radius:14px;box-shadow:3px 3px 0 var(--line);padding:14px;animation:fadeIn .25s}
+.panel h3{margin:0 0 10px;font-size:1.1rem;font-weight:900}
+.panel h3 small{font-weight:600;color:var(--muted);font-size:.85rem}
+.panel .lbl{font-size:.85rem;font-weight:800;color:var(--muted);margin:10px 0 6px;text-transform:uppercase;letter-spacing:.04em}
+.panel .lbl:first-of-type{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--bg);border:2px solid var(--line);border-radius:999px;padding:6px 13px;font-weight:700;font-size:.95rem}
+.chip.on{background:var(--accent);color:#fff}
+.need{color:var(--accent);font-weight:700;min-height:1.4em;margin:0 0 12px;font-size:.95rem}
+
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+@media (max-width:420px){.acts{grid-template-columns:repeat(2,1fr)}}
+.act{
+  position:relative;background:var(--card);border:2.5px solid var(--line);border-radius:14px;box-shadow:3px 3px 0 var(--line);
+  padding:18px 8px 14px;display:flex;flex-direction:column;align-items:center;gap:6px;font-weight:800;font-size:1rem;
+}
+.act .ic{font-size:2rem}
+.act .mark{position:absolute;top:6px;right:8px;width:22px;height:22px;border:2px solid var(--line);border-radius:6px;display:grid;place-items:center;font-size:.9rem;background:#fff}
+.act.on{background:#E3FAEF}
+.act.on .mark{background:var(--yes);color:#fff}
+.act.nope{background:#FFE6E0}
+.act.nope .mark{background:#FF5A4E;color:#fff}
+.act.nope .lb{text-decoration:line-through}
+.act.wiggle{animation:shake .45s}
+.act.wide{grid-column:1/-1;flex-direction:row;justify-content:center;gap:10px}
+.act .sub{font-weight:600;font-size:.85rem;color:var(--muted)}
+#customWrap{margin:-6px 0 20px;animation:fadeIn .25s}
+#custom{
+  width:100%;font:inherit;font-size:1rem;border:2.5px solid var(--line);border-radius:12px;padding:12px;
+  background:var(--card);box-shadow:3px 3px 0 var(--line);
+}
+textarea{
+  width:100%;font:inherit;border:2.5px solid var(--line);border-radius:12px;padding:12px;background:var(--card);
+  box-shadow:3px 3px 0 var(--line);resize:vertical;min-height:80px;margin:6px 0 22px;font-size:1rem;
+}
+.field-lbl{display:block;text-align:left;font-weight:800;margin-top:4px}
+
+.toast{
+  position:fixed;left:50%;bottom:28px;z-index:90;transform:translate(-50%,30px);opacity:0;
+  background:var(--ink);color:#fff;font-weight:800;padding:10px 18px;border-radius:12px;transition:.25s;pointer-events:none;
+  max-width:calc(100% - 32px);text-align:center;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- Vé / hoá đơn ---------- */
+.printer{
+  width:min(100%,360px);height:46px;background:var(--ink);border-radius:14px 14px 6px 6px;position:relative;z-index:2;
+  box-shadow:0 4px 0 #000;
+}
+.printer::before{content:"LET'S GOOOOO PRINTER";position:absolute;left:14px;top:9px;font-family:"JetBrains Mono",monospace;font-size:.7rem;color:#8d7f70;letter-spacing:.1em}
+.printer::after{content:"";position:absolute;right:14px;top:12px;width:9px;height:9px;border-radius:50%;background:#3f3}
+.printer.busy::after{animation:blink .3s infinite}
+@keyframes blink{50%{background:#131}}
+.slot{position:absolute;left:14px;right:14px;bottom:6px;height:6px;background:#000;border-radius:3px}
+.clip{width:min(calc(100% - 28px),332px);overflow:hidden;margin-top:-6px;position:relative;z-index:1}
+.clip.done{overflow:visible}
+.receipt{transform:translateY(-101%);font-family:"JetBrains Mono",monospace;text-align:left;color:#2a2a2a}
+.clip.printing .receipt{transform:none;transition:transform 2.6s steps(16)}
+.r-main{background:var(--paper);padding:20px 18px 14px;position:relative;box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.r-center{text-align:center}
+.r-title{font-weight:800;font-size:1.15rem;letter-spacing:.04em}
+.r-small{font-size:.75rem;color:#666}
+.r-hr{border:0;border-top:2px dashed #999;margin:10px 0}
+.r-row{display:flex;justify-content:space-between;gap:8px;font-size:.82rem;line-height:1.7}
+.r-row span:last-child{text-align:right;white-space:nowrap}
+.r-row.total{font-weight:800;font-size:1rem}
+.r-list{font-size:.82rem;line-height:1.6;margin:0;padding:0;list-style:none}
+.r-note{font-size:.8rem;font-style:italic;white-space:pre-wrap;word-break:break-word}
+.barcode{display:flex;height:44px;gap:0;justify-content:center;margin:10px 0 4px}
+.barcode i{display:block;background:#222;height:100%}
+.stamp{
+  position:absolute;right:14px;top:120px;border:4px double #E0392B;color:#E0392B;font-weight:800;
+  padding:6px 10px;font-size:1rem;transform:rotate(-14deg) scale(3);opacity:0;letter-spacing:.06em;border-radius:6px;
+  font-family:"Be Vietnam Pro",sans-serif;background:rgba(255,253,247,.6)
+}
+.stamp.hit{animation:stamp .35s cubic-bezier(.5,0,.8,1.4) forwards}
+@keyframes stamp{to{transform:rotate(-14deg) scale(1);opacity:.9}}
+.shake-screen{animation:shake .35s}
+.perf{height:14px;background:
+  radial-gradient(circle at 7px 7px,transparent 5px,var(--paper) 5.5px) 0 0/14px 14px repeat-x;
+  position:relative}
+.perf::after{content:"✂ - - - - - - - - - - - - - - - - - - - - - -";position:absolute;left:4px;top:-2px;font-size:.7rem;color:#999;white-space:nowrap;overflow:hidden;right:0}
+.stub{
+  background:var(--paper);padding:14px 18px 16px;text-align:center;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;
+  box-shadow:0 3px 0 rgba(0,0,0,.08);
+}
+.stub.dragging{cursor:grabbing}
+.stub.flyaway{transition:transform .8s cubic-bezier(.5,0,.9,.6), opacity .8s;opacity:0}
+.stub .s-title{font-weight:800;font-size:.95rem;letter-spacing:.05em}
+.stub .s-info{font-size:.78rem;color:#555;margin:4px 0 8px}
+.stub .s-hint{font-family:"Be Vietnam Pro",sans-serif;font-weight:800;color:var(--accent);font-size:.95rem}
+.stub .s-hint.pulse{animation:nudge 1s ease-in-out infinite}
+@keyframes nudge{50%{transform:translateX(10px)}}
+.tear-alt{background:none;border:0;text-decoration:underline;color:var(--muted);font-size:.8rem;margin-top:4px}
+.send-status{min-height:1.5em;font-weight:800;margin:18px 0 10px}
+.send-status.ok{color:var(--yes-dark)}
+.send-status.err{color:#E0392B}
+.ticket-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;opacity:0;transition:opacity .4s}
+.ticket-actions.show{opacity:1}
+.ticket-actions .pill-btn{font-size:1rem;padding:10px 18px}
+</style>
+</head>
+<body>
+
+<!-- ============ MÀN CHÍNH ============ -->
+<section class="screen active" id="s-ask">
+  <p class="hi">Hi <b id="nm"></b> 👋</p>
+  <h1 id="q">Em có đi chơi với anh 0?</h1>
+  <div class="btns">
+    <div class="yes-wrap">
+      <div class="hint" id="hint">Bấm vào đây nàiiii?<span class="arrow">👇</span></div>
+      <button class="big-btn" id="yes">CÓ</button>
+    </div>
+    <div class="no-slot" id="noSlot"><button class="big-btn" id="no">KHÔNG</button>
+      <div class="confirm" id="confirm"><b id="confirmQ"></b></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BƯỚC: KHI NÀO ============ -->
+<section class="screen step" id="s-when">
+  <div class="wrap">
+    <span class="step-tag">BƯỚC 1/3</span>
+    <h2>Khi nào?</h2>
+    <p class="sub">Chọn được nhiều ngày nha</p>
+    <div class="days" id="days"></div>
+    <div class="panels" id="panels"></div>
+    <p class="need" id="needWhen"></p>
+    <button class="pill-btn" id="toWhere" disabled>Tiếp →</button>
+  </div>
+</section>
+
+<!-- ============ BƯỚC: ĐI ĐÂU ============ -->
+<section class="screen step" id="s-where">
+  <div class="wrap">
+    <span class="step-tag">BƯỚC 2/3</span>
+    <h2>Đi đâu?</h2>
+    <p class="sub">Chọn thoải mái</p>
+    <div class="acts" id="acts"></div>
+    <div id="customWrap" hidden><input id="custom" maxlength="100" placeholder="Em muốn đi đâu? Điền vào đây nè ✍️"></div>
+    <label class="field-lbl" for="note">Dặn dò anh gì không?</label>
+    <textarea id="note" maxlength="300" placeholder="vd: đừng đến muộn 😤"></textarea>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="pill-btn ghost-btn" id="backWhen">← Quay lại</button>
+      <button class="pill-btn" id="toTicket">In vé 🖨️</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BƯỚC: VÉ ============ -->
+<section class="screen step" id="s-ticket">
+  <div class="wrap" style="display:flex;flex-direction:column;align-items:center">
+    <span class="step-tag">BƯỚC 3/3</span>
+    <h2>Vé của em đây</h2>
+    <p class="sub" id="ticketSub">Đang in...</p>
+    <div class="printer" id="printer"><div class="slot"></div></div>
+    <div class="clip" id="clip">
+      <div class="receipt" id="receipt">
+        <div class="r-main" id="rMain"></div>
+        <div class="perf"></div>
+        <div class="stub" id="stub"></div>
+      </div>
+    </div>
+    <div class="send-status" id="sendStatus"></div>
+    <div class="ticket-actions" id="ticketActions">
+      <button class="pill-btn" id="dl">📸 Tải hoá đơn</button>
+      <button class="pill-btn ghost-btn" id="redo">↺ Chọn lại</button>
+    </div>
+  </div>
+</section>
+
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+<div class="bubble" id="bubble"></div>
+<div class="ghost" id="ghost">Ứ cho chọn nữa?</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   CONFIG — sửa ở đây
+   ===================================================================== */
+const NAME         = "Millie";       // tên hiện ở dòng "Hi ..."
+const START_DATE   = "2026-09-29";   // ngày đầu tiên cho chọn (YYYY-MM-DD)
+const NUM_DAYS     = 7;              // số ngày hiện ra
+const FORMSPREE_ID = "xdekyald";           // vd "xyzabcd" (lấy ở formspree.io). Để trống = chế độ thử, không gửi.
+
+const WEEKDAY_TIMES = ["17:30","18:00","18:30","19:00","19:30","20:00"];
+const WEEKDAY_PLACES = ["Nhà em","Công ty em"];
+const WEEKEND_SLOTS = ["Sáng","Chiều","Tối","Cả ngày"];
+const ACTIVITIES = [
+  {id:"phim", ic:"🎬", lb:"Xem phim"},
+  {id:"work", ic:"💻", lb:"Workdate"},
+  {id:"dao",  ic:"🚶", lb:"Đi dạo"},
+  {id:"cung", ic:"🏹", lb:"Bắn cung"},
+  {id:"photo",ic:"📸", lb:"Photobooth"},
+  {id:"shop", ic:"🎨", lb:"Workshop"},
+  {id:"hoa",  ic:"🌼", lb:"Đi hít mùi hoa sữa"},
+  {id:"an",   ic:"🍜", lb:"Đi ăn",   lock:"yes", msg:"(chắc chắn là có ăn rồi)"},
+  {id:"tuy",  ic:"🤷", lb:"Tuỳ anh", lock:"no",  msg:"(noooo)"},
+  {id:"tu",   ic:"✍️", lb:"Em tự chọn", sub:"(anh rất thích)", custom:true},
+];
+const CHASE_TEXTS = ["Hụt rồi","Gà","Đố bắt được"];
+const NO_CLICK_TEXTS = ["Em chắc chưa? 🤨","Em thật sự chắc chắn chưa? 🤨","Em chắc chưa? Hỏi lần cuối? 🤨"];
+
+/* ===================================================================== */
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const state = {
+  noAttempts: 0,     // mọi lần cố: hover/chạm lúc đuổi bắt + click
+  yesClicks: 0,
+  days: new Map(),   // key -> {date, weekend, slot, time, place}
+  acts: new Set(),
+  eatSeen: false, tuySeen: false,
+  sent: false,
+};
+$("#nm").textContent = NAME;
+
+function show(id){
+  document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === id));
+  window.scrollTo(0,0);
+}
+
+let toastT;
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 1600);
+}
+
+function modal(html){
+  $("#modal").innerHTML = html;
+  $("#modalBg").classList.add("show");
+}
+function closeModal(){ $("#modalBg").classList.remove("show"); }
+
+function burst(x, y, emojis, n = 10, spread = 90){
+  for (let i = 0; i < n; i++){
+    const p = document.createElement("span");
+    p.className = "particle";
+    p.textContent = emojis[i % emojis.length];
+    document.body.appendChild(p);
+    const a = Math.random() * Math.PI * 2, d = spread * (.5 + Math.random() * .7);
+    p.animate([
+      {transform:`translate(${x}px,${y}px) scale(.4)`, opacity:1},
+      {transform:`translate(${x + Math.cos(a)*d}px,${y + Math.sin(a)*d - 30}px) scale(1)`, opacity:1, offset:.6},
+      {transform:`translate(${x + Math.cos(a)*d}px,${y + Math.sin(a)*d + 20}px) scale(.8)`, opacity:0},
+    ], {duration: 900 + Math.random()*300, easing:"cubic-bezier(.2,.8,.4,1)"}).onfinish = () => p.remove();
+  }
+}
+function rain(emojis, n = 36){
+  const w = innerWidth, h = innerHeight;
+  for (let i = 0; i < n; i++){
+    const p = document.createElement("span");
+    p.className = "particle";
+    p.style.fontSize = (1 + Math.random()) + "rem";
+    p.textContent = emojis[i % emojis.length];
+    document.body.appendChild(p);
+    const x = Math.random() * w, r = (Math.random() - .5) * 720;
+    p.animate([
+      {transform:`translate(${x}px,-40px) rotate(0)`},
+      {transform:`translate(${x + (Math.random()-.5)*120}px,${h + 40}px) rotate(${r}deg)`},
+    ], {duration: 1800 + Math.random()*1600, delay: Math.random()*700, easing:"ease-in", fill:"backwards"}).onfinish = () => p.remove();
+  }
+}
+
+/* =====================================================================
+   NÚT KHÔNG
+   phase: chase -> vanish -> autojump -> click -> done
+   ===================================================================== */
+const noBtn = $("#no"), yesBtn = $("#yes"), slot = $("#noSlot"), hint = $("#hint"), bubble = $("#bubble");
+let phase = "chase", chaseCount = 0, noClicks = 0, yesLvl = 0, lock = false, left = false;
+let mouse = {x:-999, y:-999};
+addEventListener("pointermove", e => { mouse = {x:e.clientX, y:e.clientY}; }, {passive:true});
+
+function growYes(){ yesLvl++; yesBtn.style.setProperty("--lvl", yesLvl); }
+function setHint(on){ hint.classList.toggle("show", on); }
+
+function detach(){
+  if (noBtn.classList.contains("floating")) return;
+  const r = noBtn.getBoundingClientRect();
+  slot.style.width = r.width + "px"; slot.style.height = r.height + "px";
+  noBtn.classList.add("floating", "instant");
+  noBtn.style.left = r.left + "px"; noBtn.style.top = r.top + "px";
+  noBtn.offsetWidth; // reflow
+  noBtn.classList.remove("instant");
+}
+// chọn chỗ nhảy: không đè lên "Hi …", câu hỏi, nút CÓ + mũi tên, và chừa chỗ cho bong bóng thoại phía trên
+const BUBBLE_H = 46, GAP = 16;
+function overlap(a, b){
+  const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+  const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+  return w > 0 && h > 0 ? w * h : 0;
+}
+function randomSpot(){
+  const r = noBtn.getBoundingClientRect(), m = 16;
+  const obstacles = [$(".hi"), $("#q"), yesBtn, hint].map(el => {
+    const o = el.getBoundingClientRect();
+    return {left:o.left - GAP, right:o.right + GAP, top:o.top - GAP, bottom:o.bottom + GAP};
+  });
+  const minY = m + BUBBLE_H;
+  const maxX = innerWidth - r.width - m, maxY = innerHeight - r.height - m;
+  let best = null, bestScore = Infinity;
+  for (let i = 0; i < 120; i++){
+    const x = m + Math.random() * Math.max(0, maxX - m), t = minY + Math.random() * Math.max(0, maxY - minY);
+    // vùng chiếm chỗ = nút + bong bóng phía trên + lề 2 bên cho dòng "Ứ cho chọn nữa?"
+    const box = {left:x - 30, right:x + r.width + 30, top:t - BUBBLE_H, bottom:t + r.height};
+    let score = obstacles.reduce((s, o) => s + overlap(box, o), 0);
+    const hitsMouse = mouse.x > x - 50 && mouse.x < x + r.width + 50 && mouse.y > t - 50 && mouse.y < t + r.height + 50;
+    const tooClose = Math.hypot(x - r.left, t - r.top) < 120;
+    if (hitsMouse) score += 1e6;
+    if (tooClose) score += 1e3;
+    if (score < bestScore){ best = {x, y:t}; bestScore = score; }
+    if (score === 0) break;
+  }
+  return best;   // không có chỗ trống hoàn toàn (màn quá nhỏ) thì lấy chỗ ít đè nhất
+}
+function moveNo(p){ noBtn.style.left = p.x + "px"; noBtn.style.top = p.y + "px"; }
+function say(text, p){
+  const r = noBtn.getBoundingClientRect();
+  bubble.textContent = text;
+  bubble.style.left = (p.x + r.width/2) + "px";
+  bubble.style.top = Math.max(8, p.y - 46) + "px";
+  bubble.classList.add("show");
+  clearTimeout(say.t); say.t = setTimeout(() => bubble.classList.remove("show"), 1100);
+}
+
+function dodge(){
+  if (phase !== "chase" || lock) return;
+  lock = true; setTimeout(() => lock = false, 350);
+  chaseCount++; state.noAttempts++;
+  detach(); setHint(true);
+  if (chaseCount <= CHASE_TEXTS.length){
+    const p = randomSpot(); moveNo(p); say(CHASE_TEXTS[chaseCount - 1], p);
+  } else vanish();
+}
+
+async function vanish(){
+  phase = "vanish";
+  bubble.classList.remove("show");
+  const r = noBtn.getBoundingClientRect();
+  noBtn.classList.add("poof");
+  const g = $("#ghost");
+  g.style.left = (r.left + r.width/2) + "px"; g.style.top = (r.top + r.height/2) + "px";
+  g.classList.remove("show"); g.offsetWidth; g.classList.add("show");
+  await sleep(5000); if (left) return;
+  // hiện lại ở chỗ bất kỳ
+  noBtn.classList.add("instant"); moveNo(randomSpot()); noBtn.offsetWidth;
+  noBtn.classList.remove("instant", "poof");
+  phase = "autojump";
+  const jumps = 2 + Math.round(Math.random());
+  for (let i = 0; i < jumps; i++){ await sleep(650); if (left) return; moveNo(randomSpot()); }
+  await sleep(650); if (left) return;
+  // về vị trí ban đầu
+  const s = slot.getBoundingClientRect(); moveNo({x:s.left, y:s.top});
+  await sleep(320); if (left) return;
+  noBtn.classList.add("instant"); noBtn.classList.remove("floating");
+  noBtn.style.left = noBtn.style.top = ""; slot.style.width = slot.style.height = "";
+  noBtn.offsetWidth; noBtn.classList.remove("instant");
+  phase = "click"; setHint(false);
+}
+
+function onNoClick(){
+  noClicks++; state.noAttempts++;
+  if (noClicks <= NO_CLICK_TEXTS.length){
+    // tiêu đề giữ nguyên; câu hỏi hiện trong khung xác nhận dưới nút KHÔNG
+    const c = $("#confirm");
+    $("#confirmQ").textContent = NO_CLICK_TEXTS[noClicks - 1];
+    c.classList.add("show"); c.classList.remove("pop"); c.offsetWidth; c.classList.add("pop");
+    growYes();
+  } else reveal();
+}
+
+async function reveal(){
+  phase = "done";
+  $("#confirm").classList.remove("show");
+  noBtn.classList.add("shake");
+  await sleep(500);
+  noBtn.classList.remove("shake");
+  noBtn.innerHTML = [..."KHÔNG"].map(c => `<span class="ch">${c}</span>`).join("");
+  noBtn.querySelectorAll(".ch").forEach((c, i) => {
+    c.style.setProperty("--r", ((Math.random() - .5) * 160) + "deg");
+    setTimeout(() => c.classList.add("fall"), i * 90);
+  });
+  await sleep(900);
+  noBtn.classList.add("da");
+  noBtn.textContent = "DẠ";
+  for (let i = 0; i < 7; i++){ await sleep(110); noBtn.textContent += "A"; }
+  noBtn.textContent += "!";
+  const r = noBtn.getBoundingClientRect();
+  burst(r.left + r.width/2, r.top + r.height/2, ["✨","🌼","💛","🌸"], 14, 110);
+  await sleep(1300);
+  showCount();
+}
+
+noBtn.addEventListener("mouseenter", dodge);
+noBtn.addEventListener("touchstart", e => { if (phase === "chase"){ e.preventDefault(); dodge(); } }, {passive:false});
+noBtn.addEventListener("click", e => {
+  if (phase === "click") onNoClick();
+  else if (phase === "chase") dodge();   // Tab + Enter cũng bị tính là đuổi bắt
+});
+
+/* =====================================================================
+   NÚT CÓ
+   ===================================================================== */
+yesBtn.addEventListener("click", () => {
+  if (phase === "done") return;
+  state.yesClicks++;
+  const r = yesBtn.getBoundingClientRect();
+  burst(r.left + r.width/2, r.top + r.height/2, ["🌸","💛","🌼","✨"], 8 + state.yesClicks * 3, 70 + state.yesClicks * 20);
+  if (state.yesClicks < 3){ growYes(); return; }
+  growYes();
+  modal(`<span class="emoji">📝</span>
+    <p>Cái CÓ quan trọng phải bấm 3 lần,<br><b>bằng chứng đã được lưu lại.</b></p>
+    <button class="pill-btn" id="daBtn">Dạaa</button>`);
+  $("#daBtn").onclick = showCount;
+});
+
+function showCount(){
+  left = true; phase = "done"; setHint(false); bubble.classList.remove("show");
+  const n = state.noAttempts;
+  modal(n > 0
+    ? `<h2>Hơi cứng đầu</h2>
+       <p style="margin-bottom:4px">Số lần cố bấm KHÔNG:</p>
+       <span class="count" id="cnt">0</span>
+       <p>Anh ghi nhận sự kiên trì 🫡</p>
+       <button class="pill-btn" id="goWhen">Tiếp →</button>`
+    : `<h2>Dứt khoát ghê 😎</h2>
+       <p style="margin-bottom:4px">Số lần cố bấm KHÔNG:</p>
+       <span class="count">0</span>
+       <p>Anh thích sự dứt khoát này.</p>
+       <button class="pill-btn" id="goWhen">Tiếp →</button>`);
+  rain(["🎉","🍗","🧋","🎮","🍜","🎊"]);
+  if (n > 0){
+    let i = 0; const el = $("#cnt");
+    const tick = setInterval(() => { el.textContent = ++i; if (i >= n) clearInterval(tick); }, Math.max(60, 600 / n));
+  }
+  $("#goWhen").onclick = () => { closeModal(); renderDays(); show("s-when"); };
+}
+
+/* =====================================================================
+   BƯỚC 1/3: KHI NÀO
+   ===================================================================== */
+const DOW_SHORT = ["CN","T2","T3","T4","T5","T6","T7"];
+const DOW_LONG  = ["Chủ nhật","Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7"];
+const dd = d => String(d.getDate()).padStart(2,"0") + "/" + String(d.getMonth()+1).padStart(2,"0");
+const isWeekend = d => d.getDay() === 0 || d.getDay() === 6;
+function dayList(){
+  const [y, m, d] = START_DATE.split("-").map(Number);
+  return Array.from({length: NUM_DAYS}, (_, i) => new Date(y, m - 1, d + i));
+}
+function dayKey(d){ return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+
+function renderDays(){
+  const box = $("#days"); box.innerHTML = "";
+  dayList().forEach(d => {
+    const k = dayKey(d), b = document.createElement("button");
+    b.className = "day" + (isWeekend(d) ? " weekend" : "") + (state.days.has(k) ? " on" : "");
+    b.innerHTML = `<b>${DOW_SHORT[d.getDay()]}</b><span>${dd(d)}</span>`;
+    b.onclick = () => {
+      if (state.days.has(k)) state.days.delete(k);
+      else state.days.set(k, {date:d, weekend:isWeekend(d), slot:null, time:null, place:null});
+      renderDays();
+    };
+    box.appendChild(b);
+  });
+  renderPanels();
+}
+
+function chipGroup(options, current, onPick){
+  const wrap = document.createElement("div"); wrap.className = "chips";
+  options.forEach(o => {
+    const c = document.createElement("button");
+    c.className = "chip" + (o === current ? " on" : "");
+    c.textContent = o;
+    c.onclick = () => { onPick(o); renderPanels(); };
+    wrap.appendChild(c);
+  });
+  return wrap;
+}
+
+function sortedDays(){ return [...state.days.values()].sort((a, b) => a.date - b.date); }
+
+function renderPanels(){
+  const box = $("#panels"); box.innerHTML = "";
+  sortedDays().forEach(v => {
+    const p = document.createElement("div"); p.className = "panel";
+    p.innerHTML = `<h3>${DOW_LONG[v.date.getDay()]} <small>· ${dd(v.date)}</small></h3>`;
+    const lbl = t => { const l = document.createElement("div"); l.className = "lbl"; l.textContent = t; p.appendChild(l); };
+    if (v.weekend){
+      lbl("Buổi nào");
+      p.appendChild(chipGroup(WEEKEND_SLOTS, v.slot, o => v.slot = o));
+    } else {
+      lbl("Giờ đón");
+      p.appendChild(chipGroup(WEEKDAY_TIMES, v.time, o => v.time = o));
+      lbl("Đón ở");
+      p.appendChild(chipGroup(WEEKDAY_PLACES, v.place, o => v.place = o));
+    }
+    box.appendChild(p);
+  });
+  // kiểm tra đủ chưa
+  let need = "";
+  if (!state.days.size) need = "Chọn ít nhất 1 ngày nha 👆";
+  else for (const v of sortedDays()){
+    const n = DOW_SHORT[v.date.getDay()] + " " + dd(v.date);
+    if (v.weekend && !v.slot){ need = `Chọn buổi cho ${n} nha`; break; }
+    if (!v.weekend && !v.time){ need = `Chọn giờ đón cho ${n} nha`; break; }
+    if (!v.weekend && !v.place){ need = `Đón ở đâu hôm ${n}?`; break; }
+  }
+  $("#needWhen").textContent = need;
+  $("#toWhere").disabled = !!need;
+}
+$("#toWhere").onclick = () => { renderActs(); show("s-where"); };
+
+/* =====================================================================
+   BƯỚC 2/3: ĐI ĐÂU
+   ===================================================================== */
+function renderActs(){
+  const box = $("#acts"); box.innerHTML = "";
+  ACTIVITIES.forEach(a => {
+    const b = document.createElement("button");
+    const on = a.lock === "yes" ? state.eatSeen : state.acts.has(a.id);
+    const nope = a.lock === "no" && state.tuySeen;
+    b.className = "act" + (on ? " on" : "") + (nope ? " nope" : "") + (a.custom ? " wide" : "");
+    b.innerHTML = `<span class="mark">${on ? "✓" : nope ? "✕" : ""}</span><span class="ic">${a.ic}</span><span class="lb">${a.lb}${a.sub ? ` <span class="sub">${a.sub}</span>` : ""}</span>`;
+    if (a.lock){
+      // không cho tự chọn: hover/chạm là anh tự tích luôn
+      let last = 0;
+      const trigger = e => {
+        if (e.type === "touchstart") e.preventDefault();
+        const now = Date.now(); if (now - last < 900) return; last = now;
+        if (a.lock === "yes"){ state.eatSeen = true; b.className = "act on"; b.querySelector(".mark").textContent = "✓"; }
+        else { state.tuySeen = true; b.className = "act nope"; b.querySelector(".mark").textContent = "✕"; }
+        b.classList.remove("wiggle"); b.offsetWidth; b.classList.add("wiggle");
+        toast(a.msg);
+      };
+      b.addEventListener("mouseenter", trigger);
+      b.addEventListener("touchstart", trigger, {passive:false});
+      b.addEventListener("click", trigger);
+    } else {
+      b.onclick = () => { state.acts.has(a.id) ? state.acts.delete(a.id) : state.acts.add(a.id); renderActs(); };
+    }
+    box.appendChild(b);
+  });
+  // "Em tự chọn" được chọn thì hiện ô tự điền
+  const wrap = $("#customWrap"), wasHidden = wrap.hidden;
+  wrap.hidden = !state.acts.has("tu");
+  if (wasHidden && !wrap.hidden) $("#custom").focus();
+}
+$("#backWhen").onclick = () => { renderDays(); show("s-when"); };
+$("#toTicket").onclick = () => {
+  if (state.acts.has("tu") && !$("#custom").value.trim()){
+    toast("Em điền muốn đi đâu nha ✍️"); $("#custom").focus(); return;
+  }
+  show("s-ticket"); printTicket();
+};
+
+/* =====================================================================
+   BƯỚC 3/3: VÉ (hoá đơn in nhiệt + xé cuống để gửi)
+   ===================================================================== */
+function scheduleLines(){
+  return sortedDays().map(v => {
+    const head = `${DOW_SHORT[v.date.getDay()]} ${dd(v.date)}`;
+    return v.weekend ? `${head} · ${v.slot}` : `${head} · Đón ${v.time} · ${v.place}`;
+  });
+}
+function chosenActs(){
+  // "Đi ăn" luôn có, kể cả khi chưa hover
+  return ACTIVITIES.filter(a => a.lock === "yes" || state.acts.has(a.id))
+    .map(a => a.custom ? {...a, lb: $("#custom").value.trim()} : a);
+}
+function ticketCode(){
+  const d = sortedDays()[0].date;
+  return "LGO-" + dd(d).replace("/","") + String(state.noAttempts).padStart(2,"0");
+}
+function barcode(){
+  let s = "";
+  for (let i = 0; i < 46; i++){
+    const w = [1,1,2,3][Math.floor(Math.random()*4)];
+    s += `<i style="width:${w}px;margin-right:${[1,2,2,3][Math.floor(Math.random()*4)]}px"></i>`;
+  }
+  return s;
+}
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function buildReceipt(){
+  const code = ticketCode(), note = $("#note").value.trim();
+  const now = new Date();
+  const printed = dd(now) + "/" + now.getFullYear() + " " + now.toTimeString().slice(0,5);
+  $("#rMain").innerHTML = `
+    <div class="r-center">
+      <div class="r-title">LET'S GOOOOO</div>
+      <div class="r-small">Công ty TNHH Một Thành Viên Đi Chơi</div>
+      <div class="r-small">MST: 0-CHO-TU-CHOI</div>
+      <hr class="r-hr">
+      <div style="font-weight:800">HOÁ ĐƠN ĐI CHƠI</div>
+      <div class="r-small">Số: ${code} · ${printed}</div>
+    </div>
+    <hr class="r-hr">
+    <div class="r-row"><span>Khách hàng:</span><span>${esc(NAME)}</span></div>
+    <div class="r-row"><span>Thu ngân kiêm tài xế:</span><span>Anh</span></div>
+    <hr class="r-hr">
+    <div style="font-weight:800;font-size:.82rem">LỊCH TRÌNH</div>
+    <ul class="r-list">${scheduleLines().map(l => `<li>› ${l}</li>`).join("")}</ul>
+    <hr class="r-hr">
+    ${chosenActs().map(a => `<div class="r-row"><span>${a.ic} ${esc(a.lb)} x1</span><span>${a.custom ? "Anh rất thích" : "Anh trả"}</span></div>`).join("")}
+    <div class="r-row"><span>🤷 Tuỳ anh x0</span><span>Bị từ chối</span></div>
+    <div class="r-row"><span>😤 Cứng đầu x${state.noAttempts}</span><span>Miễn phí</span></div>
+    <div class="r-row"><span>👆 Bấm CÓ x3</span><span>Đã lưu</span></div>
+    <hr class="r-hr">
+    <div class="r-row total"><span>TỔNG CỘNG</span><span>VÔ GIÁ</span></div>
+    <div class="r-row"><span>Khách đưa</span><span>0đ</span></div>
+    <div class="r-row"><span>Trả lại</span><span>1 buổi vui</span></div>
+    ${note ? `<hr class="r-hr"><div style="font-weight:800;font-size:.82rem">LỜI DẶN</div><div class="r-note">"${esc(note)}"</div>` : ""}
+    <hr class="r-hr">
+    <div class="r-center r-small">
+      Không hoàn · Không huỷ · Không đổi người đi cùng<br>
+      Đến trễ 15 phút = 1 cốc sinh tố lúa mạch 🥤
+    </div>
+    <div class="barcode">${barcode()}</div>
+    <div class="r-center r-small">${code}</div>
+    <div class="stamp" id="stamp">ĐÃ XÁC NHẬN</div>`;
+  $("#stub").innerHTML = `
+    <div class="s-title">CUỐNG VÉ · GỬI ANH</div>
+    <div class="s-info">${code} · ${scheduleLines().length} ngày · ${chosenActs().length} hoạt động</div>
+    <div class="s-hint pulse" id="sHint">✂️ Kéo sang phải để xé &amp; gửi →</div>
+    <button class="tear-alt" id="tearAlt">hoặc bấm vào đây để xé</button>`;
+  $("#tearAlt").onclick = e => { e.stopPropagation(); tear(); };
+}
+
+async function printTicket(){
+  state.sent = false;
+  const clip = $("#clip"), stub = $("#stub");
+  clip.className = "clip"; stub.className = "stub"; stub.style.transform = "";
+  $("#sendStatus").textContent = ""; $("#sendStatus").className = "send-status";
+  $("#ticketActions").classList.remove("show");
+  $("#ticketSub").textContent = "Đang in...";
+  buildReceipt();
+  $("#printer").classList.add("busy");
+  clip.offsetWidth;
+  clip.classList.add("printing");
+  await sleep(2700);
+  $("#printer").classList.remove("busy");
+  clip.classList.add("done");
+  $("#stamp").classList.add("hit");
+  await sleep(330);
+  $("#s-ticket").classList.add("shake-screen");
+  setTimeout(() => $("#s-ticket").classList.remove("shake-screen"), 400);
+  $("#ticketSub").textContent = "Xé cuống vé để gửi cho anh nha";
+  $("#ticketActions").classList.add("show");
+}
+
+/* kéo để xé cuống vé */
+(function(){
+  const stub = $("#stub");
+  let startX = null, dx = 0;
+  stub.addEventListener("pointerdown", e => {
+    if (state.sent || !$("#clip").classList.contains("done") || e.target.id === "tearAlt") return;
+    startX = e.clientX; dx = 0; stub.setPointerCapture(e.pointerId); stub.classList.add("dragging");
+  });
+  stub.addEventListener("pointermove", e => {
+    if (startX === null) return;
+    dx = Math.max(0, e.clientX - startX);
+    stub.style.transform = `translateX(${dx}px) rotate(${dx / 18}deg)`;
+  });
+  const end = () => {
+    if (startX === null) return;
+    startX = null; stub.classList.remove("dragging");
+    if (dx > stub.offsetWidth * 0.4) tear();
+    else { stub.style.transition = "transform .25s"; stub.style.transform = ""; setTimeout(() => stub.style.transition = "", 260); }
+  };
+  stub.addEventListener("pointerup", end);
+  stub.addEventListener("pointercancel", end);
+})();
+
+function tear(){
+  if (state.sent || !$("#clip").classList.contains("done")) return;
+  state.sent = true;
+  const stub = $("#stub");
+  stub.classList.add("flyaway");
+  stub.style.transform = `translate(${innerWidth}px,-${innerHeight * .6}px) rotate(35deg)`;
+  const r = stub.getBoundingClientRect();
+  burst(r.left + r.width/2, r.top, ["✈️","✨","📨"], 10, 90);
+  send();
+}
+
+async function send(){
+  const st = $("#sendStatus");
+  const payload = {
+    _subject: `${NAME} đã trả lời 🎟️`,
+    ten: NAME,
+    ma_ve: ticketCode(),
+    lich: scheduleLines().join(" | "),
+    di_dau: chosenActs().map(a => a.custom ? `Em tự chọn: ${a.lb}` : a.lb).join(", "),
+    da_hover_di_an: state.eatSeen ? "có" : "chưa",
+    da_thu_chon_tuy_anh: state.tuySeen ? "có (bị noooo)" : "không",
+    dan_do: $("#note").value.trim() || "(không có)",
+    so_lan_co_bam_khong: state.noAttempts,
+    so_lan_bam_co: state.yesClicks,
+    luc: new Date().toLocaleString("vi-VN"),
+  };
+  if (!FORMSPREE_ID){
+    console.log("[chế độ thử] payload:", payload);
+    st.className = "send-status ok";
+    st.textContent = "Đã gửi cuống vé cho anh ✈️ (chế độ thử, chưa gửi thật)";
+    thanks();
+    return;
+  }
+  st.className = "send-status"; st.textContent = "Đang gửi...";
+  try {
+    const res = await fetch("https://formspree.io/f/" + FORMSPREE_ID, {
+      method:"POST", headers:{"Content-Type":"application/json", "Accept":"application/json"}, body:JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(res.status);
+    st.className = "send-status ok"; st.textContent = "Đã gửi cuống vé cho anh ✈️";
+    thanks();
+  } catch (err){
+    st.className = "send-status err";
+    st.innerHTML = `Gửi lỗi rồi 😭 <button class="tear-alt" id="retry">thử lại</button><br><small>hoặc tải hoá đơn rồi gửi anh nha</small>`;
+    $("#retry").onclick = send;
+  }
+}
+
+/* popup cảm ơn sau khi xé cuống vé */
+function meetLines(){
+  return sortedDays().map(v => {
+    const day = `${DOW_LONG[v.date.getDay()]} (${dd(v.date)})`;
+    if (v.weekend) return `${day} · ${v.slot === "Cả ngày" ? "cả ngày" : "buổi " + v.slot.toLowerCase()}`;
+    return `${day} lúc ${v.time} tại ${v.place.toLowerCase()}`;
+  });
+}
+function firework(x, y){
+  const colors = ["#FF7A3D","#FFD23F","#23C483","#3D8BFF","#FF5A8A","#B06CFF"];
+  for (let i = 0; i < 26; i++){
+    const p = document.createElement("span");
+    p.className = "particle";
+    p.style.cssText += `width:6px;height:6px;border-radius:50%;background:${colors[i % colors.length]}`;
+    document.body.appendChild(p);
+    const a = (i / 26) * Math.PI * 2, d = 70 + Math.random() * 60;
+    p.animate([
+      {transform:`translate(${x}px,${y}px) scale(1)`, opacity:1},
+      {transform:`translate(${x + Math.cos(a)*d}px,${y + Math.sin(a)*d}px) scale(1)`, opacity:1, offset:.7},
+      {transform:`translate(${x + Math.cos(a)*d}px,${y + Math.sin(a)*d + 30}px) scale(.3)`, opacity:0},
+    ], {duration:1100, easing:"cubic-bezier(.1,.8,.3,1)"}).onfinish = () => p.remove();
+  }
+}
+async function thanks(){
+  await sleep(700);  // chờ cuống vé bay đi
+  const lines = meetLines();
+  modal(`<span class="emoji">💐</span>
+    <h2>Cảm ơn em đã hợp tác</h2>
+    <p>Hẹn gặp bạn nhỏ<br>${lines.map(l => `<b>${l}</b>`).join("<br>")}</p>
+    <button class="pill-btn" id="bye">Okiii 🫡</button>`);
+  $("#bye").onclick = closeModal;
+  rain(["🌸","🌼","🌷","🌺","💐","✨"], 44);
+  for (let i = 0; i < 7; i++){
+    setTimeout(() => firework(innerWidth * (.15 + Math.random() * .7), innerHeight * (.12 + Math.random() * .4)), i * 380);
+  }
+}
+
+/* tải hoá đơn thành ảnh */
+$("#dl").onclick = async () => {
+  const btn = $("#dl"); btn.disabled = true; btn.textContent = "Đang chụp...";
+  try {
+    if (!window.html2canvas){
+      await new Promise((ok, fail) => {
+        const s = document.createElement("script");
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+        s.onload = ok; s.onerror = fail; document.head.appendChild(s);
+      });
+    }
+    const canvas = await html2canvas($("#rMain"), {scale:2, backgroundColor:"#FFFDF7"});
+    const a = document.createElement("a");
+    a.download = ticketCode() + ".png"; a.href = canvas.toDataURL("image/png"); a.click();
+  } catch (e){ toast("Tải không được, chụp màn hình giúp anh nha 📸"); }
+  btn.disabled = false; btn.textContent = "📸 Tải hoá đơn";
+};
+$("#redo").onclick = () => { renderDays(); show("s-when"); };
+</script>
+</body>
+</html>
